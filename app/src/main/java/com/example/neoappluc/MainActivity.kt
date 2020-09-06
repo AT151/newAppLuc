@@ -1,34 +1,181 @@
 package com.example.neoappluc
 
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.os.CountDownTimer
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import android.view.Menu
 import android.view.MenuItem
+import com.example.neoappluc.util.PrefUtil
+import com.example.neoappluc.util.TimerExpiredReciever
+import kotlinx.android.synthetic.main.activity_main.*
+import java.util.*
 
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        fun setAlarm(context: Context, nowSeconds: Long, secondsRemaining: Long): Long {
+            val wakeUpTime = (nowSeconds + secondsRemaining) * 1000
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val intent = Intent(context, TimerExpiredReciever::class.java)
+            val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0)
+            alarmManager.setExact(AlarmManager.RTC_WAKEUP, wakeUpTime, pendingIntent)
+            PrefUtil.setAlarmSetTime(nowSeconds, context)
+            return wakeUpTime
+        }
+
+        fun removeAlarm(context: Context) {
+            val intent = Intent(context, TimerExpiredReciever::class.java)
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0)
+            alarmManager.cancel(pendingIntent)
+            PrefUtil.setAlarmSetTime(0, context)
+        }
+        val nowSeconds: Long
+            get() = Calendar.getInstance().timeInMillis / 1000
+    }
+
+    enum class TimerState{
+         Stopped, Running
+    }
+
+    private lateinit var timer: CountDownTimer
+    private var timerLengthSeconds: Long = 0
+    private var timerState = TimerState.Stopped
+
+    private var secondsRemaining: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.my_toolbar))
 
-        findViewById<FloatingActionButton>(R.id.fab0).setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+        fabStart.setOnClickListener { v ->
+            startTimer()
+            timerState = TimerState.Running
+            updateButtons()
+
         }
+
+        fabStop.setOnClickListener { v ->
+            timer.cancel()
+            onTimerFinished()
+        }
+
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        initTimer()
+        //TODO Remove background timer
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        if(timerState == TimerState.Running) {
+            timer.cancel()
+            //TODO Start background timer and show notifications
+        }
+
+        PrefUtil.setPreviousTimerLengthSeconds(timerLengthSeconds, this)
+        PrefUtil.setSecondsRemaining(secondsRemaining, this)
+        PrefUtil.setTimerState(timerState, this)
+    }
+
+    private fun initTimer() {
+        timerState = PrefUtil.getTimerState(this)
+
+        if(timerState == TimerState.Stopped)
+            setNewTimerLength()
+        else
+            setPreviousTimerLength()
+
+        secondsRemaining = if (timerState == TimerState.Running)
+            PrefUtil.getSecondsRemaining(this)
+        else
+            timerLengthSeconds
+
+        if (timerState == TimerState.Running)
+            startTimer()
+
+        updateButtons()
+        updateCountdownUI()
+    }
+
+    private fun onTimerFinished() {
+        timerState = TimerState.Stopped
+
+        setNewTimerLength()
+
+        progress_countdown.progress = 0
+
+        PrefUtil.setSecondsRemaining(timerLengthSeconds, this)
+        secondsRemaining = timerLengthSeconds
+
+        updateButtons()
+        updateCountdownUI()
+    }
+
+    private fun startTimer() {
+        timerState = TimerState.Running
+
+        timer = object: CountDownTimer(secondsRemaining*1000, 1000) {
+            override fun onFinish() = onTimerFinished()
+
+            override fun onTick(millisUntilFinished: Long) {
+                secondsRemaining = millisUntilFinished / 1000
+                updateCountdownUI()
+            }
+        }.start()
+    }
+
+    private fun setNewTimerLength() {
+        val lengthInMinutes = PrefUtil.getTimerLength(this)
+        timerLengthSeconds = (lengthInMinutes * 60L)
+        progress_countdown.max = timerLengthSeconds.toInt()
+    }
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_main, menu)
         return true
+    }
+
+    private fun setPreviousTimerLength(){
+        timerLengthSeconds = PrefUtil.getPreviousTimerLengthSeconds(this)
+        progress_countdown.max = timerLengthSeconds.toInt()
+    }
+
+    private fun updateCountdownUI() {
+        val minutesUntilFinished = secondsRemaining / 60
+        val secondsInMinuteUntilFinished = secondsRemaining - minutesUntilFinished * 60
+        val secondsString = secondsInMinuteUntilFinished.toString()
+        textView_countdown.text = "$minutesUntilFinished:${
+            if (secondsString.length == 2) secondsString
+            else "0" + secondsString}"
+        progress_countdown.progress = (timerLengthSeconds - secondsRemaining).toInt()
+    }
+
+    private fun updateButtons() {
+            when (timerState) {
+                TimerState.Running ->{
+                    fabStart.isEnabled = false
+                    fabStop.isEnabled = true
+                }
+                TimerState.Stopped ->{
+                    fabStart.isEnabled = true
+                    fabStop.isEnabled = false
+                }
+            }
     }
 
     private fun createNotificationChannel() {
