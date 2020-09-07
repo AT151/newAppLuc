@@ -10,7 +10,7 @@ class MySettings : AppCompatActivity() {
         setContentView(R.layout.activity_settings)
         setSupportActionBar(findViewById(R.id.my_toolbar))
         val actionBar = supportActionBar
-        actionBar!!.title = ""
+        actionBar!!.title = "Settings"
         actionBar.setDisplayHomeAsUpEnabled(true)
 
     }
