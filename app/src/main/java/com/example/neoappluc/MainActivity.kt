@@ -40,6 +40,8 @@ class MainActivity : AppCompatActivity() {
 
         val nowSeconds: Long
             get() = Calendar.getInstance().timeInMillis / 1000
+
+        var timerState = TimerState.Stopped
     }
 
     enum class TimerState{
@@ -48,7 +50,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var timer: CountDownTimer
     private var timerLengthSeconds: Long = 0
-    private var timerState = TimerState.Stopped
+
 
     private var secondsRemaining: Long = 0
 
@@ -56,6 +58,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         setSupportActionBar(findViewById(R.id.my_toolbar))
+        createNotificationChannel()
 
         fabStart.setOnClickListener { v ->
             startTimer()

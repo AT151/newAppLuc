@@ -3,6 +3,7 @@
     package="com.example.neoappluc">
 
     <application
+        android:name=".MyObserver"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -12,7 +13,7 @@
         <receiver
             android:name=".util.TimerExpiredReceiver"
             android:enabled="true"
-            android:exported="false"></receiver>
+            android:exported="false"/>
 
         <activity
             android:name=".MySettings"
