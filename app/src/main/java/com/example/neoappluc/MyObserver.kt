@@ -23,7 +23,8 @@ class MyObserver : Application(), LifecycleObserver {
     var titles: Array<String> = arrayOf("Vãi lồn",
         "Chó",
         "Lợn",
-        "Làm việc đi")
+        "Làm việc đi",
+        "Rảnh thế nhỉ?")
     var messages: Array<String> = arrayOf("Bỏ điện thoại xuống",
         "Tập trung vào",
         "Làm việc đi cho đỡ vô dụng",
