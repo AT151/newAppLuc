@@ -24,11 +24,14 @@ class MyObserver : Application(), LifecycleObserver {
         "Chó",
         "Lợn",
         "Làm việc đi",
-        "Rảnh thế nhỉ?")
+        "Rảnh thế nhỉ?"
+    )
     var messages: Array<String> = arrayOf("Bỏ điện thoại xuống",
         "Tập trung vào",
         "Làm việc đi cho đỡ vô dụng",
-        "Không làm việc thì làm chó")
+        "Không làm việc thì làm chó",
+        "Làm việc đi"
+    )
 
     override fun onCreate() {
         super.onCreate()
