@@ -18,6 +18,8 @@ import kotlin.concurrent.thread
 
 class MyObserver : Application(), LifecycleObserver {
 
+
+    //Temporary string setup
     var titles: Array<String> = arrayOf("Vãi lồn",
         "Chó",
         "Lợn",
@@ -46,7 +48,7 @@ class MyObserver : Application(), LifecycleObserver {
             while (pause) {
                 for (i in 0..3) {
                     handleNotification(titles[i],messages[i])
-                    Thread.sleep(3_000)
+                    Thread.sleep(1000)
                 }
             }
         }
